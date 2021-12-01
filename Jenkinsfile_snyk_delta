@@ -27,7 +27,7 @@ pipeline {
                 wget -q "https://github.com/snyk-tech-services/snyk-delta/releases/download/${SNYK_DELTA_VERSION}/snyk-delta-linux"
                 wget -q "https://github.com/snyk-tech-services/snyk-delta/releases/download/${SNYK_DELTA_VERSION}/snyk-delta-linux.sha256"
                 if sha256sum -c snyk-delta-linux.sha256; then
-                  mv snyk-linux ./snyk-delta
+                  mv snyk-delta-linux ./snyk-delta
                   chmod +x ./snyk-delta
                 else
                   echo "Snyk Delta Binary Download failed, exiting"

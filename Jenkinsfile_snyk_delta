@@ -23,7 +23,7 @@ pipeline {
         stage('Install Snyk Delta') {
             steps {
                 sh '''
-                SNYK_DELTA_VERSION=$(wget -q -O- https://api.github.com/repos/snyk-tech-services/snyk-delta/releases/latest | grep "zipball_url" | cut -d\" -f4 | sed 's#.*zipball/##g')
+                SNYK_DELTA_VERSION=$(wget -q -O- https://api.github.com/repos/snyk-tech-services/snyk-delta/releases/latest | grep "zipball_url" | cut -d'"' -f4 | sed 's#.*zipball/##g')
                 wget -q "https://github.com/snyk-tech-services/snyk-delta/releases/download/${SNYK_DELTA_VERSION}/snyk-delta-linux"
                 wget -q "https://github.com/snyk-tech-services/snyk-delta/releases/download/${SNYK_DELTA_VERSION}/snyk-delta-linux.sha256"
                 if sha256sum -c snyk-delta-linux.sha256; then

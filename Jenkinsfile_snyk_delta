@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Install Snyk') {
+            steps {
+                sh '''
+                wget -q "https://static.snyk.io/cli/latest/snyk-linux"
+                wget -q "https://static.snyk.io/cli/latest/snyk-linux.sha256"
+                if sha256sum -c snyk-linux.sha256; then
+                  mv snyk-linux ./snyk
+                  chmod +x ./snyk
+                  SNYK_VERSION=$(./snyk --version | cut -d' ' -f1)
+                  echo "Snyk Version: ${SNYK_VERSION} installed successfully"
+                else
+                  echo "Snyk Binary Download failed, exiting"
+                  exit 1
+                fi
+                '''
+            }
+        }
+
+        stage('Install Snyk Delta') {
+            steps {
+                sh '''
+                SNYK_DELTA_VERSION=$(wget -q -O- https://api.github.com/repos/snyk-tech-services/snyk-delta/releases/latest | grep "zipball_url" | cut -d\" -f4 | sed 's#.*zipball/##g')
+                wget -q "https://github.com/snyk-tech-services/snyk-delta/releases/download/${SNYK_DELTA_VERSION}/snyk-delta-linux"
+                wget -q "https://github.com/snyk-tech-services/snyk-delta/releases/download/${SNYK_DELTA_VERSION}/snyk-delta-linux.sha256"
+                if sha256sum -c snyk-delta-linux.sha256; then
+                  mv snyk-linux ./snyk-delta
+                  chmod +x ./snyk-delta
+                else
+                  echo "Snyk Delta Binary Download failed, exiting"
+                  exit 1
+                fi
+                '''
+            }
+        }
+
+        stage('Check Snyk Status') {
+            steps {
+            withCredentials([string(credentialsId: 'snyk-api-token', variable: 'SNYK_TOKEN')]) {
+                        sh '''
+                        echo "token = ${SNYK_TOKEN}"
+                        wget -q --header "Authorization: token $SNYK_TOKEN" https://snyk.io/api/v1/user/me -O -
+                        ./snyk auth "${SNYK_TOKEN}"
+                        '''
+                }
+            }
+        }
+        
+        stage('Multiple snyks tests with delta') {
+            steps {
+                sh '''
+                    ./snyk --version
+                    echo "Testing Project 1"
+                    ./snyk test --json --show-deps --file=package-lock.json --org=angrydome --project-name=Jenkins-Example:package.json | ./snyk-delta --baselineOrg=angrydome
+                    echo "Testing Project 2"
+                    ./snyk test --json --show-deps --file=second_projects/package-lock.json --org=angrydome --project-name=Jenkins-Example:second_projects/package.json| ./snyk-delta --baselineOrg=angrydome
+                '''
+            }
+        }
+    }
+}

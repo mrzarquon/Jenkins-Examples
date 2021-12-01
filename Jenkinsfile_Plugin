@@ -18,7 +18,6 @@ pipeline {
 
         stage('Run Snyk Plugin') {
             steps {
-            withCredentials([
                 snykSecurity(
                     additionalArguments: '--all-projects --show-vulnerable-paths=all --detection-depth=10 --exclude=e2e-tests,integration_test --reachable-timeout=1000000 --skip-unresolved', 
                     snykInstallation: 'Snyk-CLI', 
@@ -27,7 +26,6 @@ pipeline {
                     organisation: 'angrydome',
                     severity: 'critical'
                     )
-            ])
             }
         }
 
